@@ -6,15 +6,15 @@
                 <h1>Login</h1>
                 <div class="text-box">
                     <i class="fas fa-user"></i>
-                    <input type="text" placeholder="Username" v-model="username">
+                    <input type="text" placeholder="Korisnicko ime" v-model="username">
                 </div>
 
                 <div class="text-box">
                     <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Password" v-model="password">
+                    <input type="password" placeholder="Sifra" v-model="password">
                 </div>
-
-                <input type="button" class="btn" value="Log in" @click="logUser()">
+                <span style="color: red" v-show="err">{{err}}</span>
+                <input type="button" class="btn" value="Prijavi se" @click="logUser()">
             </div>
         </div>
     </div>
@@ -24,7 +24,7 @@
 
 <script>
     import Header from "@/components/Header";
-
+    import UserService from "@/services/user_service";
     export default {
         name: "Login",
         components: {
@@ -36,22 +36,31 @@
                     backgroundImage: `url(${require('../assets/bck.jpg')})`
                 },
                 username: '',
-                password: ''
+                password: '',
+                err: ''
 
             }
         },
         methods: {
 
-            logUser:  function (){
+            isUserLog:  function (){
                 setTimeout(function(){
 
                     if(localStorage.getItem('auth') != null){
 
-                        window.location = '/'
+                        window.location = '/home'
                     }
-                }, 1200)
+                }, 200)
 
             },
+            logUser : function () {
+                UserService.login(this.username, this.password, this)
+                this.username = ''
+                this.password = ''
+            }
+        },
+        mounted: function () {
+            this.isUserLog()
         }
     }
 </script>

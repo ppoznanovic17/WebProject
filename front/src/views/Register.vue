@@ -6,16 +6,17 @@
                 <h1>New User</h1>
                 <div class="text-box">
                     <i class="fas fa-user"></i>
-                    <input type="text" placeholder="Username" v-model="username">
+                    <input type="text" placeholder="Korisnicko ime" v-model="username">
                 </div>
 
                 <div class="text-box">
                     <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Password" v-model="password">
+                    <input type="password" placeholder="Sifra" v-model="password">
                 </div>
-                <span style="color: red" v-show="msg">{{msg}}</span>
+                <span style="color: green" v-show="msg">{{msg}}</span>
+                <span style="color: red" v-show="err">{{err}}</span>
 
-                <input type="button" class="btn" value="Register in" @click="register()">
+                <input type="button" class="btn" value="Registruj se" @click="register()">
             </div>
         </div>
     </div>
@@ -39,16 +40,18 @@
                 },
                 username: '',
                 password: '',
-                msg: ''
+                msg: '',
+                err: ''
 
             }
         },
         methods: {
             register:  function (){
+                this.msg = ''
+                this.err = ''
                 UserService.register(this.username, this.password, this);
                 this.username = ''
                 this.password = ''
-                return
             },
         }
     }

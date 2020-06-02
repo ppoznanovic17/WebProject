@@ -2,50 +2,15 @@
     <div>
         <Header/>
         <div class="container">
-            <div v-show="isUser" class="user_search">
-                <div class="grid-container">
-                    <div class="grid-item">
-                        <label class="search_label">Mesto polaska:</label>
-                        <br>
-                        <input type="text" placeholder="Mesto polaska" v-model="search.originCity">
-                    </div>
-                    <div class="grid-item">
-                        <label class="search_label">Mesto sletanja:</label>
-                        <br>
-                        <input type="text" placeholder="Mesto sletanja" v-model="search.destinationCity">
-                    </div>
-                    <div class="grid-item">
-                        <label class="search_label" @click="departDateClr()">Datum polaska:</label>
-                        <b-form-datepicker id="example-datepicker" v-model="search.departDate" class="mb-2"></b-form-datepicker>
-                    </div>
-                    <div class="grid-item">
-                        <label class="search_label" @click="returnDateClr()">Datum povratka:</label>
-                        <b-form-datepicker id="example-datepicker" v-model="search.returnDate" class="mb-2"></b-form-datepicker>
-                    </div>
-                    <div class="grid-container">
-                        <label >U jednom pravcu
-                            <input type="checkbox" checked="checked" v-model="search.oneWay">
-                            <span class="checkmark"></span>
-                        </label>
+            <h1> {{search.companyName}} </h1>
+            <b-button v-show="!isUser" variant="danger" @click="deleteCompany"> DELETE THIS COMPANY</b-button>
+            <br>
+            <br>
 
-                        <label>Povratna karta
-                            <input type="checkbox" v-model="search.twoWay">
-                            <span class="checkmark"></span>
-                        </label>
-                    </div>
-                    <div class="grid-item">
-                        <b-button variant="dark" @click="searchTickets()">Pretrazi</b-button>
-                    </div>
-
-                </div>
-            </div>
+            <p class="err-reservation" style="color: red" v-show="errRes">{{errRes}}</p>
+            <p class="msg-reservation" style="color: green" v-show="msgRes">{{msgRes}}</p>
             <div class="tickets">
-                <p class="err-reservation" style="color: red" v-show="errRes">{{errRes}}</p>
-                <p class="msg-reservation" style="color: green" v-show="msgRes">{{msgRes}}</p>
                 <b-table striped hover :items="tickets" :fields="fields">
-                    <template  v-slot:cell(id)="data">
-                         <p>{{data.item.id}}</p>
-                    </template>
                     <template  v-slot:cell(companyName)="data">
                         <b-button style="width: 100%; height: 70px" variant="info" @click="seeCompany(data.item.companyName)"> {{data.item.companyName}}</b-button>
                     </template>
@@ -64,43 +29,43 @@
                     </template>
                 </b-table>
             </div>
-            <div class="admin">
-                <hr>
-                <br>
-                <br>
-                <CreateTicket/>
-                <hr>
-                <br>
-                <br>
-                <CreateCompany/>
-                <hr>
-                <br>
-                <br>
-                <CreateUser/>
+
+            <div class="editComp" v-show="!isUser">
+                <h2>Menjanje imena kompanije</h2>
+                <div class="grid-item">
+                    <label>Naziv kompanije:</label>
+                    <br>
+                    <input  class="mb-2" v-model="newName">
+                    <br>
+
+                    <b-button v-show="!isUser" variant="success" @click="updateCompany"> Sacuvaj novo ime</b-button>
+                    <p class="err-reservation" style="color: red" v-show="errr">{{errr}}</p>
+                    <p class="msg-reservation" style="color: green" v-show="msggg">{{msggg}}</p>
+                </div>
             </div>
 
         </div>
-
     </div>
 </template>
 
 <script>
+
     import Header from "@/components/Header";
     import TicketService from "@/services/ticket_service";
     import ReservationService from "@/services/reservation_service";
-    import CreateTicket from "@/components/CreateTicket";
-    import CreateCompany from "@/components/CreateCompany";
-    import CreateUser from "@/components/CreateUser";
+    import CompanyService from "@/services/company_service";
+
     export default {
-        name: "Home",
+        name: "Company",
         components:{
-            CreateUser,
-          Header,
-            CreateTicket,
-            CreateCompany
+            Header
         },
         data() {
             return {
+                errr: '',
+                msggg: '',
+                company: {},
+                newName: '',
                 msgRes:'',
                 errRes:'',
                 ticket: {},
@@ -111,15 +76,11 @@
                     returnDate: '',
                     oneWay: true,
                     twoWay: true,
-                    companyName: ''
+                    companyName: this.$route.params.name
                 },
                 isUser: false,
                 tickets: [],
                 fields: [
-                    {   key: 'id',
-                        label: '#',
-                        sortable: true,
-                    },
                     {   key: 'companyName',
                         label: 'Kompanija',
                         sortable: true,
@@ -144,10 +105,6 @@
                         key: 'oneWay',
                         label: 'U jednom pravcu',
                     },
-                    {
-                        key: 'ticketCount',
-                        label: 'Broj preostalih karata',
-                    },
                     {   key: 'delete',
                         label: ''
                     },
@@ -163,6 +120,26 @@
             }
         },
         methods:{
+            updateCompany: function(){
+                this.errr = ''
+                this.msggg = ''
+
+                if(this.newName === null || this.newName === '' || this.newName === ' '){
+                    this.errr = 'Ime ne moze ostati prazno!'
+                    return
+                }
+
+                let data = {
+                    name: this.newName,
+                    version: parseInt(company.version),
+                    id: company.id
+                }
+              CompanyService.updateTicket(data, this)
+            },
+            deleteCompany: function(){
+              CompanyService.deleteCompany(company.id, this)
+                console.log(company)
+            },
             editTicket: function(id){
                 this.$router.push({path:`../editticket/${id}`})
             },
@@ -170,7 +147,7 @@
                 TicketService.deleteTicket(id, this, this.search)
             },
             seeCompany: function(name){
-              this.$router.push({path:`../company/${name}`})
+                this.$router.push({path:`../company/${name}`})
             },
             isUserLog:  function (){
                 setTimeout(function(){
@@ -195,13 +172,14 @@
                 }
             },
             isUserFun: function(){
-              if(localStorage.getItem('role') === 'USER'){
-                  this.isUser = true
-              }else {
-                  this.isUser = false
-              }
+                if(localStorage.getItem('role') === 'USER'){
+                    this.isUser = true
+                }else {
+                    this.isUser = false
+                }
             },
             searchTickets: function () {
+
                 TicketService.filter(this.search, this)
             },
             departDateClr: function () {
@@ -213,9 +191,10 @@
             reserveTicket: function (id, flightId, msg) {
                 /*console.log(id)
                 console.log(flightId)*/
-                this.errRes = ''
-                this.msgRes = ''
-                ReservationService.reserve({ticketId:id, flightId}, this, msg, this.search)
+                ReservationService.reserve({ticketId:id, flightId}, this, msg)
+            },
+            getCompanyByName : function (name) {
+                CompanyService.getCompanyByName(name, parent)
 
             }
 
@@ -225,27 +204,12 @@
             this.isUserLog()
             this.isUserFun()
             this.searchTickets()
+            this.getCompanyByName(this.$route.params.name)
 
         }
     }
 </script>
 
 <style scoped>
-    .grid-container {
-        display: grid;
-        grid-template-columns: auto auto;
-
-    }
-    .grid-item {
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px;
-        font-size: 20px;
-        text-align: center;
-    }
-    input{
-        width: 100%;
-        border-radius: 3%;
-    }
-
 
 </style>
