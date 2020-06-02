@@ -65,6 +65,27 @@ public class CompanyRepository {
         return null;
     }
 
+    public Company getCompanyByName(String name){
+        try{
+            String sql = "SELECT * FROM company";
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while (rs.next()){
+                if(rs.getString(2 ).equals(name)){
+                    Company c = new Company();
+                    c.setName(rs.getString(2));
+                    c.setId(rs.getInt(1));
+                    return c;
+                }
+            }
+            return null;
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public List<TicketDao> getCompaniesTickets(int id){
         Company c = getCompany(id);
         return TicketRepository.getInstance().getTickets("","",null,null,true,true, c.getName());
@@ -96,8 +117,26 @@ public class CompanyRepository {
     }
 
     public String newCompany(Company c) {
+
         try {
 
+            String sql = "SELECT * FROM company";
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while(rs.next()){
+              if(rs.getString(2).equals(c.getName())){
+                  return "Greska, kompanija vec postoji.";
+              }
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "Greska.";
+        }
+
+        try {
+            System.out.println(c.getName());
             String sql = "INSERT INTO company (name , version) VALUES (? , 1)";
             PreparedStatement st = con.prepareStatement(sql);
             st.setString(1,c.getName());
@@ -140,6 +179,7 @@ public class CompanyRepository {
             }
 
             if(previousVersion != currVersion){
+                System.out.println(previousVersion + " " + currVersion);
                 return "Greska pri menjanju (optimistic lock).";
             }
 
@@ -150,7 +190,7 @@ public class CompanyRepository {
                 ps.setInt(2,c.getVersion()+1);
                 ps.setInt(3, c.getId());
                 ps.executeUpdate();
-                return "Upsesno promenjeno ime kompanije.";
+                return "Uspesno promenjeno ime kompanije.";
 
             }catch (SQLException e){
                 e.printStackTrace();

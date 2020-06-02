@@ -83,7 +83,7 @@ public class AuthService {
             JWTVerifier verifier = JWT.require(algorithm)
                     .build(); //Reusable verifier instance
             DecodedJWT jwt = verifier.verify(token);
-            return jwt.getClaim("id").asInt();
+            return Integer.parseInt(jwt.getClaim("id").asString());
 
         }catch (JWTVerificationException e){
             return -1;

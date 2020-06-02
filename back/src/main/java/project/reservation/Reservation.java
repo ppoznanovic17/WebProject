@@ -22,6 +22,10 @@ public class Reservation implements Serializable {
         isAvailable = 1;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public void setIsAvailable(int isAvailable) {
         this.isAvailable = isAvailable;
     }

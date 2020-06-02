@@ -142,15 +142,24 @@ public class TicketRepository {
         }
 
         TicketDao ticketDao = new TicketDao();
+        ticketDao.setVersion(ticket.getVersion());
         ticketDao.setId(ticket.getId());
         ticketDao.setOneWay(ticket.getOneWay());
         ticketDao.setDepartDate(ticket.getDepartDate());
         ticketDao.setReturnDate(ticket.getReturnDate());
         ticketDao.setCompanyName(company);
         ticketDao.setOriginCity(flightDao.getOriginCityName());
+        ticketDao.setDepartDateString(ticket.getDepartDate().toString());
+        if(ticket.getReturnDate() != null){
+            ticketDao.setReturnDateString(ticket.getReturnDate().toString());
+        }else{
+            ticketDao.setReturnDateString("");
+        }
+
         ticketDao.setDestinationCity(flightDao.getDestinationCityName());
         ticketDao.setCompanyId(ticket.getCompanyId());
         ticketDao.setFlightId(ticket.getFlightId());
+        ticketDao.setTicketCount(ticket.getTicketCount());
 
         return ticketDao;
     }
@@ -185,6 +194,7 @@ public class TicketRepository {
     private List<TicketDao> getTicketsRepository(String originCity, String destinationCity, String departDateString, String returnDateString, boolean oneWay, boolean twoWay, String companyName) {
         originCity = Util.toEmpty(originCity);
         destinationCity = Util.toEmpty(destinationCity);
+        companyName = Util.toEmpty(companyName);
         String ticketType = ticketType(oneWay, twoWay);
         if(ticketType.equals("one")) returnDateString = null;
         List<Ticket> ticketList = new ArrayList();
@@ -211,6 +221,7 @@ public class TicketRepository {
                         t.setId(rs.getInt(1));
                         t.setCompanyId(rs.getInt(6));
                         t.setFlightId(rs.getInt(7));
+                        t.setTicketCount(rs.getInt(5));
                         ticketList.add(t);
 
                     }else if(!Util.isEmpty(departDateString) && Util.isEmpty(returnDateString)){
@@ -225,9 +236,9 @@ public class TicketRepository {
                         t.setId(rs.getInt(1));
                         t.setCompanyId(rs.getInt(6));
                         t.setFlightId(rs.getInt(7));
-                        System.out.println(departDateString + " " + t.getDepartDate().toString());
+                        //System.out.println(departDateString + " " + t.getDepartDate().toString() + " " + rs.getDate(3));
                         if(departDateString.equals(t.getDepartDate().toString())){
-                            System.out.println("a");
+                            //System.out.println("a");
                             ticketList.add(t);
                         }
 
@@ -314,6 +325,7 @@ public class TicketRepository {
 
         for(Ticket t: ticketList){
             TicketDao ticketDao = new TicketDao(t);
+            //System.out.println(ticketDao.getDepartDate() + " " + t.getDepartDate());
             Flight f = flightHashMap.get(ticketDao.getFlightId());
             String origin = cityHashMap.get(f.getOriginCity()).getName();
             String destination = cityHashMap.get(f.getDestinationCity()).getName();
@@ -322,6 +334,9 @@ public class TicketRepository {
                 ticketDao.setOriginCity(origin);
                 ticketDao.setDestinationCity(destination);
                 ticketDao.setCompanyName(c.getName());
+                ticketDao.setDepartDateString(ticketDao.getDepartDate().toString());
+                if(ticketDao.getReturnDate() != null) ticketDao.setReturnDateString(ticketDao.getReturnDate().toString());
+                //System.out.println(ticketDao.getDepartDate());
                 ticketDaoList.add(ticketDao);
 
             }
@@ -352,8 +367,8 @@ public class TicketRepository {
                 String sql = "UPDATE ticket SET one_way = ? , depart_date = ?, return_date = ?, ticket_count = ?, company_id = ? , flight_id = ? , version = ? WHERE id = ?";
                 PreparedStatement st1 = con.prepareStatement(sql);
                 st1.setInt(1,t.getOneWay());
-                System.out.println(t.getDepartDate());
-                System.out.println(t.getReturnDate());
+                //System.out.println(t.getDepartDate());
+                //System.out.println(t.getReturnDate());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 Date date = sdf.parse(t.getDepartDate());
                 st1.setDate(2, new java.sql.Date(date.getTime()));
@@ -389,10 +404,13 @@ public class TicketRepository {
         try {
 
                 String sql = "INSERT INTO ticket (one_way , depart_date , return_date , ticket_count , company_id , flight_id , version) VALUES (? , ? , ? , ? , ? , ? , 1)";
+                if(t.getTicketCount() < 1){
+                    return "Broj karata ne sme biti manji od 1";
+                }
                 PreparedStatement st1 = con.prepareStatement(sql);
                 st1.setInt(1,t.getOneWay());
-                System.out.println(t.getDepartDate());
-                System.out.println(t.getReturnDate());
+                //System.out.println(t.getDepartDate());
+                //System.out.println(t.getReturnDate());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 Date date = sdf.parse(t.getDepartDate());
                 st1.setDate(2, new java.sql.Date(date.getTime()));
@@ -402,6 +420,12 @@ public class TicketRepository {
                     if(t.getReturnDate()!= null){
                         date = sdf.parse(t.getReturnDate());
                         st1.setDate(3, new java.sql.Date(date.getTime()));
+                        Date depart = sdf.parse(t.getDepartDate());
+                        Date returnD = sdf.parse(t.getReturnDate());
+                        if(depart.after(returnD)){
+                            return "Datum povratka mora biti posle datuma polaska.";
+                        }
+
                     }else{
                         return "Morate uneti datum povratka jer je karta u dva smera!";
                     }
@@ -462,6 +486,30 @@ public class TicketRepository {
                 st1.setInt(3, ticket.getId());
                 st1.executeUpdate();
                 return "Uspesno napravljene izmene.";
+
+
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return "Greska.";
+    }
+
+    public String increasedTicketCount(int ticketId){
+        Ticket ticket = getTicket(ticketId);
+        try {
+            if(ticket.getTicketCount() == 0){
+                return "Nema vise karata.";
+            }
+            String sql = "UPDATE ticket SET ticket_count = ?, version = ? WHERE id = ?";
+            PreparedStatement st1 = con.prepareStatement(sql);
+            st1.setInt(1, ticket.getTicketCount()+1);
+            st1.setInt(2, ticket.getVersion()+1);
+            st1.setInt(3, ticket.getId());
+            st1.executeUpdate();
+            return "Uspesno napravljene izmene.";
 
 
 

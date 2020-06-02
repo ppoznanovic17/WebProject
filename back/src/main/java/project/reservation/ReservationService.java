@@ -20,4 +20,8 @@ public class ReservationService {
         return ReservationRepository.getInstance().getUserReservation(id);
     }
 
+    public String cancelReservation(int userId, int reservationId){
+        return ReservationRepository.getInstance().deleteReservation(userId, reservationId);
+    }
+
 }

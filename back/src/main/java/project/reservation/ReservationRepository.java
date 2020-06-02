@@ -1,18 +1,15 @@
 package project.reservation;
 
-import project.company.Company;
 import project.reservation.dao.ReservationDao;
 import project.reservation.dto.ReservationDto;
-import project.ticket.Ticket;
+
 import project.ticket.TicketRepository;
 import project.ticket.dao.TicketDao;
 
-import java.awt.*;
+
 import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 public class ReservationRepository {
@@ -33,29 +30,57 @@ public class ReservationRepository {
     }
 
 
-    public String deleteCompany(int id){
+    public String deleteReservation(int userId, int reservationId){
+        Reservation r = null;
+        try{
+
+            String sql = "SELECT * FROM reservation";
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while(rs.next()){
+                if(rs.getInt(1) == reservationId){
+                    if(rs.getInt(5) == userId){
+                        r = new Reservation();
+                        r.setId(rs.getInt(1));
+                        r.setIsAvailable(rs.getInt(2));
+                        r.setFlightId(rs.getInt(3));
+                        r.setTicketId(rs.getInt(4));
+                        r.setUserId(rs.getInt(5));
+                    }else {
+                        return "Nije dobar korisnik krenuo da brise rezervaciju.";
+                    }
+                }
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+            return "Greska.";
+        }
+
+        if(r == null){
+            return "Ne postoji rezervacija.";
+        }
+
+        TicketDao ticketDao = TicketRepository.getInstance().getDaoFromTicket(r.getTicketId());
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 2);
+        Date twoDaysAfter = calendar.getTime();
+        if(twoDaysAfter.equals(ticketDao.getDepartDate()) || twoDaysAfter.after(ticketDao.getDepartDate())){
+            return "Istekao je rok za otkazivanje rezervacije.";
+        }
 
         try{
-            String sql = "DELETE FROM company WHERE id = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1,id);
-            ps.executeUpdate();
-            return "Uspesno je obrisana kompanija.";
+            String sql = "DELETE FROM reservation WHERE id = ?";
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setInt(1,r.getId());
+            st.executeUpdate();
+            TicketRepository.getInstance().increasedTicketCount(ticketDao.getId());
+            return "Uspesno brisanje";
+
         }catch (SQLException e){
             e.printStackTrace();
         }
 
-
-        try{
-            String sql = "DELETE FROM company WHERE id = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setInt(1,id);
-            ps.executeUpdate();
-            return "Uspesno je obrisana kompanija.";
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-        return "Doslo je do greske!";
+        return "Greska.";
     }
 
     public synchronized String reserveTicket(ReservationDto reservationDto){
@@ -80,28 +105,10 @@ public class ReservationRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        TicketRepository.getInstance().increasedTicketCount(reservationDto.getTicketId());
        return "Greska.";
     }
 
-  /*  public Reservation getReservation(int id){
-
-        try{
-            String sql = "SELECT * FROM reservation";
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()){
-                if(rs.getInt(1 ) == id){
-
-                }
-            }
-            return null;
-
-        }catch (SQLException e){
-            e.printStackTrace();
-        }
-        return null;
-
-    }*/
 
     public int countReservations(int userId){
         try {
@@ -133,6 +140,7 @@ public class ReservationRepository {
             while (rs.next()){
                 if(rs.getInt(5) == id){
                     Reservation r = new Reservation();
+                    r.setId(rs.getInt(1));
                     r.setIsAvailable(rs.getInt(2));
                     r.setFlightId(rs.getInt(3));
                     r.setTicketId(rs.getInt(4));
@@ -158,10 +166,18 @@ public class ReservationRepository {
             ResultSet rs = st.executeQuery(sql);
             while (rs.next()){
                 for(ReservationDao r : reservationDaoList){
-
-                    Date d = new Date();
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.add(Calendar.DAY_OF_YEAR, 2);
+                    Date d = calendar.getTime();
                     if(r.getTicketId() == rs.getInt(1)){
                         TicketDao dao = TicketRepository.getInstance().getDaoFromTicket(rs.getInt(1));
+                        if(dao.getReturnDate() != null){
+                            dao.setReturnDateString(dao.getReturnDate().toString());
+                        }else{
+                            dao.setReturnDateString("");
+                        }
+
+                        dao.setDepartDateString(dao.getDepartDate().toString());
                         if(d.after(dao.getDepartDate())) r.setIsAvailable(0);
                         r.setTicketDao(dao);
                     }

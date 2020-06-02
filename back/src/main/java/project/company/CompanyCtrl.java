@@ -53,6 +53,19 @@ public class CompanyCtrl {
 
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{name}/company")
+    public Company getCompanyByName(@HeaderParam("Authorization")String auth, @PathParam("name") String name){
+
+        if(authService.isAuthenticate(auth)){
+            return companyService.getCompanyByName(name);
+        }
+        return null;
+
+
+    }
+
     /***
      * vracam karte odredjene firma
      * u pozadini to radim funkcijom za pretragu i filtriranje koja se nalazi u ticket repo-u
@@ -74,9 +87,10 @@ public class CompanyCtrl {
      * brisem kompaniju
      * samo admin
      * */
-    @DELETE
+    //@DELETE
+        @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}")
+    @Path("/{id}/delete")
     public String deleteCompany(@HeaderParam("Authorization")String auth, @PathParam("id") int id){
 
         if(authService.isAdmin(auth)){

@@ -44,6 +44,7 @@ public class UserRepository {
                     id = rs.getInt(1);
                     String idStr = String.valueOf(id);
                     //System.out.println(rs.getInt(1) + "aaaaaaaaa");
+                    System.out.println(idStr);
                     Algorithm alg = Algorithm.HMAC256("petar");
                     String token = JWT.create().withIssuer("auth0")
                             .withClaim("username", u.getUsername())
@@ -51,15 +52,15 @@ public class UserRepository {
                             .withClaim("role", u.getRole())
                             .sign(alg);
 
-                    return token + " " + u.getId() + " " + u.getUsername() + " " +  u.getRole();
+                    return token + " " + idStr + " " + u.getUsername() + " " +  u.getRole();
                 }
 
             }
-            return password;
+            return "Greska. Pogresni kredencijali";
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return "Error";
+        return "Greska.";
     }
 
     public synchronized String createUser(UserDto userDto){
@@ -73,7 +74,7 @@ public class UserRepository {
                 ResultSet rs = statement.executeQuery(sql);
                 while (rs.next()){
                     if(rs.getString(2).toLowerCase().equals(userDto.getUsername().toLowerCase())){
-                        return "User already exist.";
+                        return "Korisnik vec postoji.";
                     }
                 }
 
@@ -84,11 +85,6 @@ public class UserRepository {
 
 
         try{
-            String url = "jdbc:mysql://localhost:3306/web_project";
-            String username = "root";
-            String password = "";
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, username, password);
 
             String sql2 = "INSERT INTO USER (username , password, user_type) VALUES (? , ? , ?)";
             PreparedStatement st = con.prepareStatement(sql2);
@@ -98,7 +94,7 @@ public class UserRepository {
             st.executeUpdate();
 
             return "Uspesno ste kreirali novi nalog";
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return "Doslo je do greske.";
@@ -116,7 +112,7 @@ public class UserRepository {
             ResultSet rs = statement.executeQuery(sql);
             while (rs.next()){
                 if(rs.getString(2).toLowerCase().equals(userDto.getUsername().toLowerCase())){
-                    return "User already exist.";
+                    return "Korisnik vec postoji.";
                 }
             }
 
@@ -127,11 +123,6 @@ public class UserRepository {
 
 
         try{
-            String url = "jdbc:mysql://localhost:3306/web_project";
-            String username = "root";
-            String password = "";
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, username, password);
 
             String sql2 = "INSERT INTO USER (username , password, user_type) VALUES (? , ? , ?)";
             PreparedStatement st = con.prepareStatement(sql2);
@@ -141,7 +132,7 @@ public class UserRepository {
             st.executeUpdate();
 
             return "Uspesno ste kreirali novog admina.";
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return "Doslo je do greske.";

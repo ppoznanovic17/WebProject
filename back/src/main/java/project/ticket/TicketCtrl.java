@@ -61,8 +61,9 @@ public class TicketCtrl {
      *  brisanje karata
      *  samo admin
      * */
-    @DELETE
-    @Path("/{id}")
+    //@DELETE
+    @GET
+    @Path("/{id}/delete")
     @Produces(MediaType.APPLICATION_JSON)
     public String deleteTicket(@HeaderParam("Authorization")String auth, @PathParam("id") int id){
         if(authService.isAdmin(auth)){
@@ -109,8 +110,8 @@ public class TicketCtrl {
      * update karte
      * samo admin
      * */
-    @PUT
-    @Path("/{id}")
+    @POST
+    @Path("/{id}/put")
     @Produces(MediaType.APPLICATION_JSON)
     public String updateTicket(@HeaderParam("Authorization")String auth, @PathParam("id") int id, TicketDto2 newTicket){
 

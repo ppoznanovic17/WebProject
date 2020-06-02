@@ -14,6 +14,10 @@ public class CompanyService {
         return CompanyRepository.getInstance().getCompany(id);
     }
 
+    public Company getCompanyByName(String name){
+        return CompanyRepository.getInstance().getCompanyByName(name);
+    }
+
     public List<TicketDao> getCompaniesTickets(int id){
         return CompanyRepository.getInstance().getCompaniesTickets(id);
     }
