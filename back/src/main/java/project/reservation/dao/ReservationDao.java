@@ -25,7 +25,6 @@ public class ReservationDao implements Serializable {
         ticketId = res.getTicketId();
     }
 
-
     public int getTicketId() {
         return ticketId;
     }

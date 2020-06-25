@@ -359,7 +359,7 @@ public class TicketRepository {
         return "Doslo je do greske.";
     }
 
-    private synchronized String updateTicketRepository(int id, TicketDto2 newTicket) {
+    private String updateTicketRepository(int id, TicketDto2 newTicket) {
         Ticket old = getTicket(id);
         TicketDto2 t = newTicket;
         try {
@@ -503,6 +503,9 @@ public class TicketRepository {
             if(ticket.getTicketCount() == 0){
                 return "Nema vise karata.";
             }
+
+
+
             String sql = "UPDATE ticket SET ticket_count = ?, version = ? WHERE id = ?";
             PreparedStatement st1 = con.prepareStatement(sql);
             st1.setInt(1, ticket.getTicketCount()+1);

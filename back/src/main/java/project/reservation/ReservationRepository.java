@@ -83,7 +83,7 @@ public class ReservationRepository {
         return "Greska.";
     }
 
-    public synchronized String reserveTicket(ReservationDto reservationDto){
+    public String reserveTicket(ReservationDto reservationDto){
         try {
 
             String msg = TicketRepository.getInstance().reserve(reservationDto.getTicketId());
@@ -99,13 +99,16 @@ public class ReservationRepository {
             st.setInt(2,reservationDto.getTicketId());
             st.setInt(3,reservationDto.getUserId());
             st.executeUpdate();
+
+
+            TicketRepository.getInstance().increasedTicketCount(reservationDto.getTicketId());
+
             return "Uspesno ste rezervisali.";
 
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        TicketRepository.getInstance().increasedTicketCount(reservationDto.getTicketId());
        return "Greska.";
     }
 
